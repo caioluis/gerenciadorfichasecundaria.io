@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JKGA - Ficha Secundária (V4 Safe)</title>
+<style>
+  /* --- ESTILOS GERAIS --- */
+  body { background: #121212; color: #eee; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #1a1a1a; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #6D20C5; }
+
+  .editor-pane { width: 45%; padding: 20px; overflow-y: auto; border-right: 1px solid #333; background: #1a1a1a; display: flex; flex-direction: column; }
+  .preview-pane { width: 55%; padding: 20px; background: #000; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
+
+  h1 { font-size: 20px; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 5px 0; border-left: 4px solid #6D20C5; padding-left: 10px; }
+  h2 { border-bottom: 1px solid #444; padding-bottom: 5px; color: #ccc; font-size: 14px; margin-top: 25px; font-weight: 600; text-transform: uppercase; }
+  h3 { color: #8a40e3; font-size: 12px; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+  
+  /* Inputs e Grupos */
+  .input-group { background: #222; padding: 10px; margin-bottom: 8px; border: 1px solid #333; border-radius: 4px; position: relative; transition: .2s; display: flex; flex-direction: column; gap: 5px; }
+  .input-group.dragging { opacity: 0.5; border: 1px dashed #6D20C5; }
+  .input-group:hover { border-color: #444; }
+  
+  /* Arrastar e Soltar */
+  .drag-handle { cursor: grab; color: #555; font-size: 16px; position: absolute; left: 5px; top: 5px; padding: 5px; z-index: 10; }
+  .drag-handle:hover { color: #6D20C5; }
+  .input-group { padding-left: 25px; }
+
+  label { display: block; font-size: 10px; color: #888; margin-bottom: 0px; text-transform: uppercase; font-weight: 700; }
+  input, select, textarea { width: 100%; background: #0f0f0f; border: 1px solid #333; color: #ddd; padding: 6px; font-size: 12px; box-sizing: border-box; border-radius: 2px; font-family: monospace; }
+  input:focus, select:focus, textarea:focus { border-color: #6D20C5; outline: none; background: #151515; }
+  
+  /* Smart Parser Area */
+  .smart-parser { background: #180a20; border: 1px dashed #6D20C5; color: #dcbdfc; height: 40px; font-size: 10px; margin-bottom: 10px; resize: vertical; }
+  .smart-parser::placeholder { color: #5e3a8c; font-style: italic; }
+
+  .row { display: flex; gap: 8px; }
+  .col { flex: 1; }
+
+  /* Botões */
+  .btn-group { display: flex; gap: 5px; margin-bottom: 20px; }
+  button { cursor: pointer; border: none; padding: 6px 10px; border-radius: 3px; font-weight: bold; transition: 0.2s; font-size: 11px; text-transform: uppercase; }
+  .btn-add { background: #2a2a2a; color: #aaa; width: 100%; margin-bottom: 5px; border: 1px dashed #444; }
+  .btn-add:hover { background: #333; color: #fff; border-color: #6D20C5; }
+  
+  .btn-remove { background: transparent; color: #662222; position: absolute; top: 5px; right: 5px; font-size: 14px; padding: 0 5px; }
+  .btn-remove:hover { color: #ff4444; background: transparent; }
+  
+  .btn-action { flex: 1; padding: 12px; color: #fff; font-size: 12px; }
+  .btn-generate { background: #6D20C5; }
+  .btn-generate:hover { background: #8a40e3; }
+  .btn-import { background: #333; color: #ccc; }
+  .btn-clear { background: #3a1111; color: #ffaaaa; }
+
+  textarea#finalCode { display: none; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: .3s; backdrop-filter: blur(4px); }
+  .modal-overlay.active { opacity: 1; pointer-events: all; }
+  .modal-box { background: #1a1a1a; border: 1px solid #6D20C5; width: 320px; padding: 25px; box-shadow: 0 0 30px rgba(109, 32, 197, 0.4); transform: scale(0.9); transition: .3s; text-align: center; border-radius: 4px; }
+  .modal-overlay.active .modal-box { transform: scale(1); }
+  
+  .modal-btn-row { display: flex; gap: 10px; margin-top: 20px; justify-content: center; }
+  .modal-btn { width: 100%; padding: 10px; color: #fff; }
+  .btn-ok { background: #6D20C5; }
+  .btn-ok:hover { background: #8a40e3; }
+  
+  .btn-danger { background: #800000; }
+  .btn-danger:hover { background: #ff0000; }
+  .btn-cancel { background: #333; }
+  .btn-cancel:hover { background: #555; }
+
+  #modalAlertBtns, #modalConfirmBtns { display: none; width: 100%; }
+
+  
+  #import-area { display: none; margin-bottom: 15px; background: #222; padding: 10px; border: 1px solid #444; }
+
+  /* PREVIEW CSS MINIFICADO */
+  .preview-area { width: 100%; max-width: 800px; }
+  .j-b{--p:#6D20C5;--b:#121212;--g:#1e1e1e;--t:#ccc;font:12px Segoe UI,sans-serif;background:var(--b);color:var(--t);border:1px solid #333;max-width:800px;margin:auto}
+  .j-b input{display:none}
+  .j-n{display:flex;background:#000;border-bottom:2px solid var(--p)}
+  .j-n label{flex:1;text-align:center;padding:10px;cursor:pointer;background:#0a0a0a;font-weight:700;text-transform:uppercase;transition:.3s}
+  #t1:checked~.j-n label[for="t1"],#t2:checked~.j-n label[for="t2"]{background:var(--p);color:#fff}
+  .j-c{display:none;padding:15px;animation:f .5s}
+  #t1:checked~.c1,#t2:checked~.c2{display:block}
+  @keyframes f{from{opacity:0}to{opacity:1}}
+  .i-c{background:var(--g);border:1px solid #333;margin-bottom:10px;padding:10px;display:grid;grid-template-columns:80px 1fr;gap:10px}
+  .i-m{width:100%;height:80px;object-fit:cover;border:1px solid #444}
+  .i-h{border-bottom:1px solid var(--p);padding-bottom:2px;margin-bottom:2px;display:flex;justify-content:space-between}
+  .i-n{color:#fff;font-weight:700;text-transform:uppercase}
+  .i-tp{font-size:9px;color:var(--p);font-weight:700;background:#000;padding:1px 4px;border-radius:2px}
+  .i-st{font:10px monospace;color:#999}.i-st b{color:#fff}
+  .i-d,.i-ef{line-height:1.3;font-size:11px}.i-ef{color:#dcbdfc;margin-top:2px}.i-ef b{color:var(--p)}
+  .l-bk{margin-bottom:20px}
+  .l-tt{background:linear-gradient(90deg,var(--p),transparent);color:#fff;padding:4px 10px;font-weight:700;text-transform:uppercase;font-size:11px;margin-bottom:5px;letter-spacing:1px}
+  .l-rw{display:flex;justify-content:space-between;background:var(--g);padding:6px 10px;margin-bottom:2px;align-items:center;font-size:11px}
+  .l-rw:hover{background:#333;border-left:2px solid var(--p)}
+  .l-dt{color:var(--p);font-weight:700;margin-right:10px;font-family:monospace}
+  .l-tx{flex:1;color:#ddd}
+  .l-lk{background:#000;color:#fff;text-decoration:none;padding:2px 6px;border-radius:2px}
+  .ap-bx{margin-bottom:10px;border:1px solid #333}
+  .ap-hd{background:#252525;padding:5px 10px;font-weight:700;color:#fff;display:flex;justify-content:space-between;align-items:center;font-size:11px}
+  .c-n{background:var(--p);padding:1px 5px;border-radius:3px;font-size:9px}
+  .ap-bd{padding:5px}
+</style>
+</head>
+<body>
+
+  <div id="customModal" class="modal-overlay">
+    <div class="modal-box">
+      <span id="modalIcon" style="font-size:40px; display:block; margin-bottom:10px;">✅</span>
+      <span id="modalTitle" style="color:#fff; font-weight:bold; font-size: 16px; display:block; margin:5px 0; text-transform:uppercase; letter-spacing:1px;">Sucesso</span>
+      <span id="modalMsg" style="color:#ccc; font-size:13px; display:block; line-height:1.4;">Operação realizada.</span>
+      
+      <div class="modal-btn-row">
+        <div id="modalAlertBtns">
+            <button class="modal-btn btn-ok" onclick="closeModal()">ENTENDIDO</button>
+        </div>
+        <div id="modalConfirmBtns" style="display:none; gap:10px; width:100%; display:flex;">
+            <button class="modal-btn btn-danger" onclick="confirmDeleteAction()">EXCLUIR</button>
+            <button class="modal-btn btn-cancel" onclick="closeModal()">CANCELAR</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="editor-pane">
+    <h1>JKGA - Ficha Secundária</h1>
+    <p style="font-size:11px; color:#888;">O gerenciador amigo da vizinhança</p>
+
+    <div class="btn-group">
+      <button class="btn-action btn-generate" onclick="generateCode()">Copiar HTML</button>
+      <button class="btn-action btn-import" onclick="toggleImport()">Importar</button>
+      <button class="btn-action btn-clear" onclick="clearData()">Limpar</button>
+    </div>
+
+    <div id="import-area">
+        <label style="color:#fff;">Cole seu código HTML antigo aqui:</label>
+        <textarea id="importCode" rows="5" placeholder="Cole o código <div class='j-b'>...</div> aqui"></textarea>
+        <button class="btn-add" style="background:#6D20C5; color:white; border:none;" onclick="processImport()">Processar</button>
+    </div>
+
+    <div id="form-content">
+        <h2>Inventário</h2>
+        <div id="items-container" class="sortable-list"></div>
+        <button class="btn-add" onclick="addItem()">+ Item</button>
+
+        <h2>Registros</h2>
+        
+        <h3>Missões</h3>
+        <div id="missoes-container" class="sortable-list"></div>
+        <button class="btn-add" onclick="addLog('missoes-container')">+ Missão</button>
+
+        <h3>Quests</h3>
+        <div id="quests-container" class="sortable-list"></div>
+        <button class="btn-add" onclick="addLog('quests-container')">+ Quest</button>
+
+        <h3>Raids</h3>
+        <div id="raids-container" class="sortable-list"></div>
+        <button class="btn-add" onclick="addLog('raids-container')">+ Raid</button>
+
+        <h3>Eventos</h3>
+        <div id="eventos-container" class="sortable-list"></div>
+        <button class="btn-add" onclick="addLog('eventos-container')">+ Evento</button>
+
+        <h3>RPs Livres</h3>
+        <div id="rp-container" class="sortable-list"></div>
+        <button class="btn-add" onclick="addLog('rp-container')">+ RP Livre</button>
+
+        <h3>Ocorrências</h3>
+        <div id="occ-container" class="sortable-list"></div>
+        <button class="btn-add" onclick="addLog('occ-container')">+ Ocorrência</button>
+
+        <h3>Treinos de Atributo</h3>
+        <div id="attr-container" class="sortable-list"></div>
+        <button class="btn-add" onclick="addLog('attr-container')">+ Treino Atributo</button>
+
+        <h2>Aptidões</h2>
+        <div id="aptitudes-container" class="sortable-list"></div>
+        <button class="btn-add" style="border-color: #6D20C5; color: #dcbdfc" onclick="addAptitudeBlock()">+ Categoria de Aptidão</button>
+    </div>
+    
+    <textarea id="finalCode"></textarea>
+  </div>
+
+  <div class="preview-pane">
+    <div class="preview-area" id="previewArea"></div>
+  </div>
+
+<script>
+// --- VARIÁVEIS GLOBAIS ---
+let draggedItem = null;
+let elementToDelete = null; // Armazena o elemento que será deletado
+
+// --- CONFIG ---
+const aptList = [
+  "Combate Desarmado", "Espadas Longas", "Machados Longos", "Martelos Longos", "Clavas", "Arcos Longos", 
+  "Escalada", "Acrobacia", "Resistência", "Mitridatismo", "Espadas Curtas", "Adagas", "Lâminas Duplas", 
+  "Machados Curtos", "Martelos Curtos", "Lanças", "Foices", "Bastões", "Correntes", "Arcos Curtos", 
+  "Balestras", "Arremesso de Armas", "Pistolas/Revólveres", "Espingardas", "Rifles de Precisão", 
+  "Rifles de Assalto", "Submetralhadoras", "Metralhadoras Leves", "Furtividade", "Natação", "Corrida", 
+  "Feitiços", "Barreiras", "Pactos", "Percepção Mágica", "Manipulação", "Vontade", "Primeiros Socorros", 
+  "Técnica Reversa", "Percepção Visual", "Sobrevivência"
+];
+
+// --- SISTEMA DE MODAL AVANÇADO ---
+function showModal(title, msg, type = 'info') {
+    const modal = document.getElementById('customModal');
+    const alertBtns = document.getElementById('modalAlertBtns');
+    const confirmBtns = document.getElementById('modalConfirmBtns');
+
+    document.getElementById('modalTitle').innerText = title;
+    document.getElementById('modalMsg').innerText = msg;
+    
+    // Configura ícone
+    const icon = document.getElementById('modalIcon');
+    if(type === 'success') icon.innerText = '✅';
+    else if(type === 'error') icon.innerText = '❌';
+    else if(type === 'warning') icon.innerText = '⚠️';
+    else icon.innerText = 'ℹ️';
+
+    // Configura botões
+    if(type === 'confirm') {
+        alertBtns.style.display = 'none';
+        confirmBtns.style.display = 'flex';
+    } else {
+        alertBtns.style.display = 'block';
+        confirmBtns.style.display = 'none';
+    }
+
+    modal.classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('customModal').classList.remove('active');
+    elementToDelete = null; // Limpa o alvo
+}
+
+// --- LÓGICA DE DELEÇÃO SEGURA ---
+function requestDelete(element, type) {
+    elementToDelete = element;
+    
+    let title = "Confirmação";
+    let msg = "Tem certeza?";
+
+    // Personalização da mensagem
+    if(type === 'item') {
+        title = "Descartar Item?";
+        msg = "Você está prestes a remover este equipamento. Essa ação não pode ser desfeita.";
+    } else if (type === 'log') {
+        title = "Queimar Registro?";
+        msg = "Deseja apagar este histórico de missão/treino? A comprovação será perdida.";
+    } else if (type === 'aptidao') {
+        title = "Esquecer Estilo?";
+        msg = "Isso apagará a categoria inteira e todos os treinos dentro dela.";
+    } else if (type === 'treino') {
+        title = "Apagar Treino?";
+        msg = "Remover este treino específico da lista?";
+    }
+
+    showModal(title, msg, 'confirm');
+}
+
+function confirmDeleteAction() {
+    if(elementToDelete) {
+        elementToDelete.remove();
+        updatePreview();
+        saveData();
+        closeModal();
+    }
+}
+
+// --- DRAG & DROP ---
+function enableDrag(element) {
+    const handle = element.querySelector('.drag-handle');
+    handle.addEventListener('mousedown', () => { element.setAttribute('draggable', 'true'); });
+    element.addEventListener('dragstart', (e) => {
+        draggedItem = element; e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => element.classList.add('dragging'), 0);
+    });
+    element.addEventListener('dragend', () => {
+        element.setAttribute('draggable', 'false'); element.classList.remove('dragging');
+        draggedItem = null; saveData(); updatePreview();
+    });
+    element.addEventListener('dragover', (e) => {
+        e.preventDefault(); const sortList = element.parentNode;
+        const siblings = [...sortList.querySelectorAll('.input-group:not(.dragging)')];
+        let nextSibling = siblings.find(sib => e.clientY <= sib.getBoundingClientRect().top + sib.offsetHeight / 2);
+        sortList.insertBefore(draggedItem, nextSibling);
+    });
+}
+
+function createRemoveBtn(parent, type='log') {
+  const btn = document.createElement('button');
+  btn.className = 'btn-remove';
+  btn.innerHTML = '&times;';
+  // Agora chama o requestDelete em vez de remover direto
+  btn.onclick = () => requestDelete(parent, type);
+  return btn;
+}
+
+// --- PARSER ---
+function parseStats(textarea) {
+    const text = textarea.value;
+    const parent = textarea.parentElement;
+    if(!text.trim()) return;
+
+    const nameMatch = text.split('\n')[0];
+    const typeMatch = text.match(/(?:Tipo|Classificação):\s*(.*?)(?:\n|$)/i);
+    const dmgMatch = text.match(/(?:Dano|Ataque):\s*(.*?)(?:\n|$)/i);
+    const durMatch = text.match(/(?:Durabilidade|Resistência):\s*(.*?)(?:\n|$)/i);
+    const descMatch = text.match(/(?:Descrição|Desc):\s*([\s\S]*?)(?:Efeito:|$)/i);
+    const effMatch = text.match(/(?:Efeito|Habilidade):\s*([\s\S]*)/i);
+
+    if(nameMatch) parent.querySelector('.i-name').value = nameMatch.trim();
+    if(typeMatch) parent.querySelector('.i-type').value = typeMatch[1].trim();
+    if(dmgMatch) parent.querySelector('.i-dmg').value = dmgMatch[1].trim();
+    if(durMatch) parent.querySelector('.i-dur').value = durMatch[1].trim();
+    if(descMatch) parent.querySelector('.i-desc').value = descMatch[1].trim();
+    if(effMatch) parent.querySelector('.i-eff').value = effMatch[1].trim();
+    
+    updatePreview(); saveData();
+    textarea.style.borderColor = '#0f0'; setTimeout(() => textarea.style.borderColor = '#6D20C5', 500);
+}
+
+// --- CRIAÇÃO DE ELEMENTOS ---
+function addItem(data = {}) {
+  const div = document.createElement('div');
+  div.className = 'input-group item-entry';
+  div.innerHTML = `
+    <span class="drag-handle">☰</span>
+    <textarea class="smart-parser" placeholder="Solte a descrição bruta aqui. A ferramenta vai tentar se organizar sozinha. Se falhar, faça os ajustes manualmente." oninput="parseStats(this)"></textarea>
+    <div class="row"><div class="col"><label>Nome</label><input type="text" class="i-name" value="${data.name || ''}" oninput="updatePreview(); saveData()"></div><div class="col"><label>Tipo</label><input type="text" class="i-type" value="${data.type || ''}" oninput="updatePreview(); saveData()"></div></div>
+    <label>Imagem URL</label><input type="text" class="i-img" value="${data.img || ''}" placeholder="https://..." oninput="updatePreview(); saveData()">
+    <div class="row"><div class="col"><label>Dano</label><input type="text" class="i-dmg" value="${data.dmg || ''}" oninput="updatePreview(); saveData()"></div><div class="col"><label>Durab.</label><input type="text" class="i-dur" value="${data.dur || ''}" oninput="updatePreview(); saveData()"></div></div>
+    <label>Descrição</label><textarea class="i-desc" rows="1" oninput="updatePreview(); saveData()">${data.desc || ''}</textarea>
+    <label>Efeito</label><textarea class="i-eff" rows="1" oninput="updatePreview(); saveData()">${data.eff || ''}</textarea>
+  `;
+  // Passa o tipo 'item' para a confirmação personalizada
+  div.appendChild(createRemoveBtn(div, 'item'));
+  document.getElementById('items-container').appendChild(div);
+  enableDrag(div);
+  return div;
+}
+
+function addLog(containerId, data = {}) {
+  const div = document.createElement('div');
+  div.className = 'input-group log-entry';
+  div.dataset.type = containerId;
+  div.innerHTML = `
+    <span class="drag-handle">☰</span>
+    <div class="row">
+      <div style="flex:0 0 50px"><label>Data</label><input type="text" class="l-date" value="${data.date || ''}" oninput="updatePreview(); saveData()"></div>
+      <div class="col"><label>Descrição</label><input type="text" class="l-text" value="${data.text || ''}" oninput="updatePreview(); saveData()"></div>
+      <div style="flex:0 0 40px"><label>Link</label><input type="text" class="l-link" value="${data.link || ''}" oninput="updatePreview(); saveData()"></div>
+    </div>
+  `;
+  div.appendChild(createRemoveBtn(div, 'log'));
+  document.getElementById(containerId).appendChild(div);
+  enableDrag(div);
+  updatePreview(); saveData();
+}
+
+function addAptitudeBlock(data = {}) {
+  const container = document.getElementById('aptitudes-container');
+  const div = document.createElement('div');
+  div.className = 'input-group apt-block';
+  let options = aptList.map(a => `<option value="${a}" ${data.name === a ? 'selected' : ''}>${a}</option>`).join('');
+  
+  div.innerHTML = `<span class="drag-handle">☰</span><label style="color:#6D20C5;font-weight:bold;">Categoria</label><select class="apt-select" onchange="updatePreview(); saveData()">${options}</select><div class="apt-logs-container" style="margin-top:10px;border-top:1px dashed #444;padding-top:5px;"></div><button class="btn-add" style="margin-top:5px; font-size:10px" onclick="addAptLog(this)">+ Treino</button>`;
+  
+  div.appendChild(createRemoveBtn(div, 'aptidao'));
+  container.appendChild(div);
+  enableDrag(div);
+  
+  if(data.logs && data.logs.length > 0) data.logs.forEach(log => addAptLog(div.querySelector('.btn-add'), log));
+  updatePreview(); saveData();
+}
+
+function addAptLog(btn, data = {}) {
+  const container = btn.previousElementSibling;
+  const div = document.createElement('div');
+  div.className = 'log-entry apt-entry'; 
+  div.style.marginBottom = "5px";
+  // Botão inline manual, chamando requestDelete
+  div.innerHTML = `<div class="row"><div style="flex:0 0 50px"><input type="text" class="l-date" value="${data.date || ''}" placeholder="Dt" oninput="updatePreview(); saveData()"></div><div class="col"><input type="text" class="l-text" value="${data.text || ''}" placeholder="Desc..." oninput="updatePreview(); saveData()"></div><div style="flex:0 0 40px"><input type="text" class="l-link" value="${data.link || ''}" placeholder="#" oninput="updatePreview(); saveData()"></div><button onclick="requestDelete(this.parentElement.parentElement, 'treino')" style="background:transparent; color:#882222; font-weight:bold; padding:0 5px; border:none; cursor:pointer;">x</button></div>`;
+  container.appendChild(div);
+  updatePreview(); saveData();
+}
+
+// --- GERAÇÃO HTML ---
+function generateHTMLString() {
+  let itemsHTML = '';
+  document.querySelectorAll('.item-entry').forEach(el => {
+    itemsHTML += `<div class="i-c"><img src="${el.querySelector('.i-img').value || 'https://via.placeholder.com/80'}" class="i-m"><div><div class="i-h"><span class="i-n">${el.querySelector('.i-name').value}</span><span class="i-tp">${el.querySelector('.i-type').value}</span></div><div class="i-st"><b>Dano:</b> ${el.querySelector('.i-dmg').value} | <b>Durabilidade:</b> ${el.querySelector('.i-dur').value}</div><div class="i-d">${el.querySelector('.i-desc').value}</div><div class="i-ef"><b>Efeito:</b> ${el.querySelector('.i-eff').value}</div></div></div>`;
+  });
+
+  const getBlock = (id, title) => {
+    let content = '';
+    document.getElementById(id).querySelectorAll('.log-entry').forEach(el => {
+      content += `<div class="l-rw"><span class="l-dt">${el.querySelector('.l-date').value}</span><span class="l-tx">${el.querySelector('.l-text').value}</span><a href="${el.querySelector('.l-link').value}" class="l-lk">LINK</a></div>`;
+    });
+    return `<div class="l-bk"><div class="l-tt">${title}</div>${content}</div>`;
+  };
+
+  let aptHTML = '';
+  document.querySelectorAll('.apt-block').forEach(blk => {
+    const name = blk.querySelector('.apt-select').value;
+    const logs = blk.querySelectorAll('.apt-entry');
+    let logsStr = '';
+    logs.forEach(l => { logsStr += `<div class="l-rw"><span class="l-dt">${l.querySelector('.l-date').value}</span><span class="l-tx">${l.querySelector('.l-text').value}</span><a href="${l.querySelector('.l-link').value}" class="l-lk">LINK</a></div>`; });
+    aptHTML += `<div class="ap-bx"><div class="ap-hd">${name} <span class="c-n">${logs.length < 10 ? '0'+logs.length : logs.length} Treinos</span></div><div class="ap-bd">${logsStr}</div></div>`;
+  });
+
+  const css = `<style>.j-b{--p:#6D20C5;--b:#121212;--g:#1e1e1e;--t:#ccc;font:12px Segoe UI,sans-serif;background:var(--b);color:var(--t);border:1px solid #333;max-width:800px;margin:auto}.j-b input{display:none}.j-n{display:flex;background:#000;border-bottom:2px solid var(--p)}.j-n label{flex:1;text-align:center;padding:10px;cursor:pointer;background:#0a0a0a;font-weight:700;text-transform:uppercase;transition:.3s}#t1:checked~.j-n label[for="t1"],#t2:checked~.j-n label[for="t2"]{background:var(--p);color:#fff}.j-c{display:none;padding:15px;animation:f .5s}#t1:checked~.c1,#t2:checked~.c2{display:block}@keyframes f{from{opacity:0}to{opacity:1}}.i-c{background:var(--g);border:1px solid #333;margin-bottom:10px;padding:10px;display:grid;grid-template-columns:80px 1fr;gap:10px}.i-m{width:100%;height:80px;object-fit:cover;border:1px solid #444}.i-h{border-bottom:1px solid var(--p);padding-bottom:2px;margin-bottom:2px;display:flex;justify-content:space-between}.i-n{color:#fff;font-weight:700;text-transform:uppercase}.i-tp{font-size:9px;color:var(--p);font-weight:700;background:#000;padding:1px 4px;border-radius:2px}.i-st{font:10px monospace;color:#999}.i-st b{color:#fff}.i-d,.i-ef{line-height:1.3;font-size:11px}.i-ef{color:#dcbdfc;margin-top:2px}.i-ef b{color:var(--p)}.l-bk{margin-bottom:20px}.l-tt{background:linear-gradient(90deg,var(--p),transparent);color:#fff;padding:4px 10px;font-weight:700;text-transform:uppercase;font-size:11px;margin-bottom:5px;letter-spacing:1px}.l-rw{display:flex;justify-content:space-between;background:var(--g);padding:6px 10px;margin-bottom:2px;align-items:center;font-size:11px}.l-rw:hover{background:#333;border-left:2px solid var(--p)}.l-dt{color:var(--p);font-weight:700;margin-right:10px;font-family:monospace}.l-tx{flex:1;color:#ddd}.l-lk{background:#000;color:#fff;text-decoration:none;padding:2px 6px;border-radius:2px}.ap-bx{margin-bottom:10px;border:1px solid #333}.ap-hd{background:#252525;padding:5px 10px;font-weight:700;color:#fff;display:flex;justify-content:space-between;align-items:center;font-size:11px}.c-n{background:var(--p);padding:1px 5px;border-radius:3px;font-size:9px}.ap-bd{padding:5px}</style>`;
+  return css + `<div class="j-b"><input type="radio" name="g" id="t1" checked><input type="radio" name="g" id="t2"><div class="j-n"><label for="t1">Inventário</label><label for="t2">Registros</label></div><div class="j-c c1">${itemsHTML}</div><div class="j-c c2">${getBlock('missoes-container', 'Missões')}${getBlock('quests-container', 'Quests')}${getBlock('raids-container', 'Raids')}${getBlock('eventos-container', 'Eventos')}${getBlock('rp-container', 'RPs Livres')}${getBlock('occ-container', 'Ocorrências')}<div class="l-bk"><div class="l-tt">Treinos de Aptidão</div>${aptHTML}</div>${getBlock('attr-container', 'Treinos de Atributo')}</div></div>`;
+}
+
+function updatePreview() { 
+    const area = document.getElementById('previewArea');
+    const t1State = area.querySelector('#t1') ? area.querySelector('#t1').checked : true;
+    area.innerHTML = generateHTMLString(); 
+    if(area.querySelector('#t1')) {
+        area.querySelector('#t1').checked = t1State;
+        area.querySelector('#t2').checked = !t1State;
+    }
+}
+
+function generateCode() {
+  const txt = document.getElementById('finalCode');
+  txt.value = generateHTMLString();
+  txt.select(); document.execCommand('copy');
+  showModal('Código Copiado!', 'Cole no fórum ou na sua ficha.', 'success');
+}
+
+// --- PERSISTÊNCIA ---
+function saveData() {
+    const data = { items: [], missoes: [], quests: [], raids: [], eventos: [], rp: [], occ: [], attr: [], aptitudes: [] };
+    
+    document.querySelectorAll('.item-entry').forEach(el => {
+        data.items.push({
+            name: el.querySelector('.i-name').value, type: el.querySelector('.i-type').value, img: el.querySelector('.i-img').value,
+            dmg: el.querySelector('.i-dmg').value, dur: el.querySelector('.i-dur').value, desc: el.querySelector('.i-desc').value, eff: el.querySelector('.i-eff').value
+        });
+    });
+
+    const grabLogs = (id) => {
+        const arr = [];
+        document.getElementById(id).querySelectorAll('.log-entry').forEach(el => {
+            arr.push({ date: el.querySelector('.l-date').value, text: el.querySelector('.l-text').value, link: el.querySelector('.l-link').value });
+        });
+        return arr;
+    };
+    data.missoes = grabLogs('missoes-container'); data.quests = grabLogs('quests-container'); data.raids = grabLogs('raids-container');
+    data.eventos = grabLogs('eventos-container'); data.rp = grabLogs('rp-container'); data.occ = grabLogs('occ-container'); data.attr = grabLogs('attr-container');
+
+    document.querySelectorAll('.apt-block').forEach(blk => {
+        const logs = [];
+        blk.querySelectorAll('.apt-entry').forEach(l => {
+            logs.push({ date: l.querySelector('.l-date').value, text: l.querySelector('.l-text').value, link: l.querySelector('.l-link').value });
+        });
+        data.aptitudes.push({ name: blk.querySelector('.apt-select').value, logs: logs });
+    });
+    localStorage.setItem('jkga_sec_v3', JSON.stringify(data));
+}
+
+function loadData() {
+    const saved = localStorage.getItem('jkga_sec_v3');
+    if(!saved) return;
+    repopulateForm(JSON.parse(saved));
+}
+
+function repopulateForm(data) {
+    document.getElementById('items-container').innerHTML = '';
+    ['missoes-container','quests-container','raids-container','eventos-container','rp-container','occ-container','attr-container'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('aptitudes-container').innerHTML = '';
+
+    if(data.items) data.items.forEach(i => addItem(i));
+    if(data.missoes) data.missoes.forEach(l => addLog('missoes-container', l));
+    if(data.quests) data.quests.forEach(l => addLog('quests-container', l));
+    if(data.raids) data.raids.forEach(l => addLog('raids-container', l));
+    if(data.eventos) data.eventos.forEach(l => addLog('eventos-container', l));
+    if(data.rp) data.rp.forEach(l => addLog('rp-container', l));
+    if(data.occ) data.occ.forEach(l => addLog('occ-container', l));
+    if(data.attr) data.attr.forEach(l => addLog('attr-container', l));
+    if(data.aptitudes) data.aptitudes.forEach(a => addAptitudeBlock(a));
+    updatePreview();
+}
+
+function clearData() {
+    // Usamos o confirm nativo aqui apenas para o reset total, mas poderíamos usar o modal customizado se quisesse
+    if(confirm("Deseja apagar TODO o progresso salvo?")) { localStorage.removeItem('jkga_sec_v3'); location.reload(); }
+}
+
+function toggleImport() { document.getElementById('import-area').style.display = document.getElementById('import-area').style.display === 'block' ? 'none' : 'block'; }
+function processImport() {
+    const code = document.getElementById('importCode').value;
+    if(!code) return showModal('Erro', 'Caixa vazia.', 'error');
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(code, 'text/html');
+        const importedData = { items: [], missoes: [], quests: [], raids: [], eventos: [], rp: [], occ: [], attr: [], aptitudes: [] };
+
+        doc.querySelectorAll('.i-c').forEach(el => {
+            const stats = el.querySelector('.i-st').innerHTML;
+            importedData.items.push({
+                name: el.querySelector('.i-n').innerText, type: el.querySelector('.i-tp').innerText, img: el.querySelector('.i-m').src,
+                dmg: stats.match(/Dano:<\/b>\s*(.*?)\s*\|/) ? stats.match(/Dano:<\/b>\s*(.*?)\s*\|/)[1] : '',
+                dur: stats.match(/Durabilidade:<\/b>\s*(.*?)</) ? stats.match(/Durabilidade:<\/b>\s*(.*?)</)[1] : '',
+                desc: el.querySelector('.i-d').innerText, eff: el.querySelector('.i-ef').innerText.replace('Efeito: ', '')
+            });
+        });
+
+        doc.querySelectorAll('.l-bk').forEach(bk => {
+            const title = bk.querySelector('.l-tt').innerText.toUpperCase();
+            const logs = [];
+            bk.querySelectorAll('.l-rw').forEach(rw => logs.push({ date: rw.querySelector('.l-dt').innerText, text: rw.querySelector('.l-tx').innerText, link: rw.querySelector('.l-lk').getAttribute('href') }));
+            
+            if(title.includes('MISSÕES')) importedData.missoes = logs;
+            else if(title.includes('QUESTS')) importedData.quests = logs;
+            else if(title.includes('RAIDS')) importedData.raids = logs;
+            else if(title.includes('EVENTOS')) importedData.eventos = logs;
+            else if(title.includes('RPS LIVRES')) importedData.rp = logs;
+            else if(title.includes('OCORRÊNCIAS')) importedData.occ = logs;
+            else if(title.includes('TREINOS DE ATRIBUTO')) importedData.attr = logs;
+            else if(title.includes('TREINOS DE APTIDÃO')) {
+                bk.querySelectorAll('.ap-bx').forEach(ab => {
+                    const aptName = ab.querySelector('.ap-hd').childNodes[0].textContent.trim();
+                    const aptLogs = [];
+                    ab.querySelectorAll('.l-rw').forEach(rw => aptLogs.push({ date: rw.querySelector('.l-dt').innerText, text: rw.querySelector('.l-tx').innerText, link: rw.querySelector('.l-lk').getAttribute('href') }));
+                    importedData.aptitudes.push({ name: aptName, logs: aptLogs });
+                });
+            }
+        });
+        repopulateForm(importedData); saveData(); showModal('Importado', 'Dados carregados com sucesso.', 'success'); toggleImport();
+    } catch(e) { showModal('Erro', 'Código inválido.', 'error'); }
+}
+
+loadData();
+if(document.querySelectorAll('.item-entry').length === 0) addItem();
+updatePreview();
+</script>
+</body>
+</html>
