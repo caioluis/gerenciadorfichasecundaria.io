@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JKGA - Ficha Secundária (V4 Safe)</title>
+<title>JKGA - Ficha Secundária</title>
 <style>
   /* --- ESTILOS GERAIS --- */
   body { background: #121212; color: #eee; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
@@ -18,12 +18,12 @@
   h1 { font-size: 20px; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 5px 0; border-left: 4px solid #6D20C5; padding-left: 10px; }
   h2 { border-bottom: 1px solid #444; padding-bottom: 5px; color: #ccc; font-size: 14px; margin-top: 25px; font-weight: 600; text-transform: uppercase; }
   h3 { color: #8a40e3; font-size: 12px; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; font-weight: 700; display: flex; align-items: center; gap: 5px; }
-  
+   
   /* Inputs e Grupos */
   .input-group { background: #222; padding: 10px; margin-bottom: 8px; border: 1px solid #333; border-radius: 4px; position: relative; transition: .2s; display: flex; flex-direction: column; gap: 5px; }
   .input-group.dragging { opacity: 0.5; border: 1px dashed #6D20C5; }
   .input-group:hover { border-color: #444; }
-  
+   
   /* Arrastar e Soltar */
   .drag-handle { cursor: grab; color: #555; font-size: 16px; position: absolute; left: 5px; top: 5px; padding: 5px; z-index: 10; }
   .drag-handle:hover { color: #6D20C5; }
@@ -32,7 +32,7 @@
   label { display: block; font-size: 10px; color: #888; margin-bottom: 0px; text-transform: uppercase; font-weight: 700; }
   input, select, textarea { width: 100%; background: #0f0f0f; border: 1px solid #333; color: #ddd; padding: 6px; font-size: 12px; box-sizing: border-box; border-radius: 2px; font-family: monospace; }
   input:focus, select:focus, textarea:focus { border-color: #6D20C5; outline: none; background: #151515; }
-  
+   
   /* Smart Parser Area */
   .smart-parser { background: #180a20; border: 1px dashed #6D20C5; color: #dcbdfc; height: 40px; font-size: 10px; margin-bottom: 10px; resize: vertical; }
   .smart-parser::placeholder { color: #5e3a8c; font-style: italic; }
@@ -45,10 +45,10 @@
   button { cursor: pointer; border: none; padding: 6px 10px; border-radius: 3px; font-weight: bold; transition: 0.2s; font-size: 11px; text-transform: uppercase; }
   .btn-add { background: #2a2a2a; color: #aaa; width: 100%; margin-bottom: 5px; border: 1px dashed #444; }
   .btn-add:hover { background: #333; color: #fff; border-color: #6D20C5; }
-  
+   
   .btn-remove { background: transparent; color: #662222; position: absolute; top: 5px; right: 5px; font-size: 14px; padding: 0 5px; }
   .btn-remove:hover { color: #ff4444; background: transparent; }
-  
+   
   .btn-action { flex: 1; padding: 12px; color: #fff; font-size: 12px; }
   .btn-generate { background: #6D20C5; }
   .btn-generate:hover { background: #8a40e3; }
@@ -63,12 +63,12 @@
   .modal-overlay.active { opacity: 1; pointer-events: all; }
   .modal-box { background: #1a1a1a; border: 1px solid #6D20C5; width: 320px; padding: 25px; box-shadow: 0 0 30px rgba(109, 32, 197, 0.4); transform: scale(0.9); transition: .3s; text-align: center; border-radius: 4px; }
   .modal-overlay.active .modal-box { transform: scale(1); }
-  
+   
   .modal-btn-row { display: flex; gap: 10px; margin-top: 20px; justify-content: center; }
   .modal-btn { width: 100%; padding: 10px; color: #fff; }
   .btn-ok { background: #6D20C5; }
   .btn-ok:hover { background: #8a40e3; }
-  
+   
   .btn-danger { background: #800000; }
   .btn-danger:hover { background: #ff0000; }
   .btn-cancel { background: #333; }
@@ -76,7 +76,7 @@
 
   #modalAlertBtns, #modalConfirmBtns { display: none; width: 100%; }
 
-  
+   
   #import-area { display: none; margin-bottom: 15px; background: #222; padding: 10px; border: 1px solid #444; }
 
   /* PREVIEW CSS MINIFICADO */
@@ -116,7 +116,7 @@
       <span id="modalIcon" style="font-size:40px; display:block; margin-bottom:10px;">✅</span>
       <span id="modalTitle" style="color:#fff; font-weight:bold; font-size: 16px; display:block; margin:5px 0; text-transform:uppercase; letter-spacing:1px;">Sucesso</span>
       <span id="modalMsg" style="color:#ccc; font-size:13px; display:block; line-height:1.4;">Operação realizada.</span>
-      
+       
       <div class="modal-btn-row">
         <div id="modalAlertBtns">
             <button class="modal-btn btn-ok" onclick="closeModal()">ENTENDIDO</button>
@@ -371,13 +371,13 @@ function addAptitudeBlock(data = {}) {
   const div = document.createElement('div');
   div.className = 'input-group apt-block';
   let options = aptList.map(a => `<option value="${a}" ${data.name === a ? 'selected' : ''}>${a}</option>`).join('');
-  
+   
   div.innerHTML = `<span class="drag-handle">☰</span><label style="color:#6D20C5;font-weight:bold;">Categoria</label><select class="apt-select" onchange="updatePreview(); saveData()">${options}</select><div class="apt-logs-container" style="margin-top:10px;border-top:1px dashed #444;padding-top:5px;"></div><button class="btn-add" style="margin-top:5px; font-size:10px" onclick="addAptLog(this)">+ Treino</button>`;
-  
+   
   div.appendChild(createRemoveBtn(div, 'aptidao'));
   container.appendChild(div);
   enableDrag(div);
-  
+   
   if(data.logs && data.logs.length > 0) data.logs.forEach(log => addAptLog(div.querySelector('.btn-add'), log));
   updatePreview(); saveData();
 }
@@ -516,6 +516,7 @@ function clearData() {
 }
 
 function toggleImport() { document.getElementById('import-area').style.display = document.getElementById('import-area').style.display === 'block' ? 'none' : 'block'; }
+
 function processImport() {
     const code = document.getElementById('importCode').value;
     if(!code) return showModal('Erro', 'Caixa vazia.', 'error');
@@ -527,10 +528,15 @@ function processImport() {
         doc.querySelectorAll('.i-c').forEach(el => {
             const stats = el.querySelector('.i-st').innerHTML;
             importedData.items.push({
-                name: el.querySelector('.i-n').innerText, type: el.querySelector('.i-tp').innerText, img: el.querySelector('.i-m').src,
+                name: el.querySelector('.i-n').innerText, 
+                type: el.querySelector('.i-tp').innerText, 
+                img: el.querySelector('.i-m').src,
+                // Regex do Dano mantido (busca até a barra vertical |)
                 dmg: stats.match(/Dano:<\/b>\s*(.*?)\s*\|/) ? stats.match(/Dano:<\/b>\s*(.*?)\s*\|/)[1] : '',
-                dur: stats.match(/Durabilidade:<\/b>\s*(.*?)</) ? stats.match(/Durabilidade:<\/b>\s*(.*?)</)[1] : '',
-                desc: el.querySelector('.i-d').innerText, eff: el.querySelector('.i-ef').innerText.replace('Efeito: ', '')
+                // CORREÇÃO: Agora busca tudo que não seja um símbolo de tag (<)
+                dur: stats.match(/Durabilidade:<\/b>\s*([^<]*)/) ? stats.match(/Durabilidade:<\/b>\s*([^<]*)/)[1].trim() : '',
+                desc: el.querySelector('.i-d').innerText, 
+                eff: el.querySelector('.i-ef').innerText.replace('Efeito: ', '')
             });
         });
 
@@ -556,7 +562,7 @@ function processImport() {
             }
         });
         repopulateForm(importedData); saveData(); showModal('Importado', 'Dados carregados com sucesso.', 'success'); toggleImport();
-    } catch(e) { showModal('Erro', 'Código inválido.', 'error'); }
+    } catch(e) { console.error(e); showModal('Erro', 'Código inválido ou estrutura incompatível.', 'error'); }
 }
 
 loadData();
