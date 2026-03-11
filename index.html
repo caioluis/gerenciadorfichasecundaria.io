@@ -207,7 +207,7 @@ const aptList = [
   "Escalada", "Acrobacia", "Resistência", "Mitridatismo", "Espadas Curtas", "Adagas", "Lâminas Duplas", 
   "Machados Curtos", "Martelos Curtos", "Lanças", "Foices", "Bastões", "Correntes", "Arcos Curtos", 
   "Balestras", "Arremesso de Armas", "Pistolas/Revólveres", "Espingardas", "Rifles de Precisão", 
-  "Rifles de Assalto", "Submetralhadoras", "Metralhadoras Leves", "Furtividade", "Natação", "Corrida", 
+  "Rifles de Assalto", "Submetralhadoras", "Metralhadoras Leves", "Furtividade", "Natação", "Celeridade",
   "Feitiços", "Barreiras", "Pactos", "Percepção Mágica", "Manipulação", "Vontade", "Primeiros Socorros", 
   "Técnica Reversa", "Percepção Visual", "Sobrevivência"
 ];
@@ -494,7 +494,10 @@ function saveData() {
 function loadData() {
     const saved = localStorage.getItem('jkga_sec_v3');
     if(!saved) return;
-    repopulateForm(JSON.parse(saved));
+    const data = JSON.parse(saved);
+    // Migração: Corrida → Celeridade
+    if(data.aptitudes) data.aptitudes.forEach(a => { if(a.name === 'Corrida') a.name = 'Celeridade'; });
+    repopulateForm(data);
 }
 
 function repopulateForm(data) {
@@ -563,7 +566,7 @@ function processImport() {
                     const aptName = ab.querySelector('.ap-hd').childNodes[0].textContent.trim();
                     const aptLogs = [];
                     ab.querySelectorAll('.l-rw').forEach(rw => aptLogs.push({ date: rw.querySelector('.l-dt').innerText, text: rw.querySelector('.l-tx').innerText, link: rw.querySelector('.l-lk').getAttribute('href') }));
-                    importedData.aptitudes.push({ name: aptName, logs: aptLogs });
+                    importedData.aptitudes.push({ name: aptName === 'Corrida' ? 'Celeridade' : aptName, logs: aptLogs });
                 });
             }
         });
