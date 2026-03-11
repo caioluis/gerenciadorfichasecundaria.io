@@ -184,6 +184,10 @@
         <div id="attr-container" class="sortable-list"></div>
         <button class="btn-add" onclick="addLog('attr-container')">+ Treino Atributo</button>
 
+        <h2>Categorias Personalizadas</h2>
+        <div id="custom-categories-container"></div>
+        <button class="btn-add" style="border-color:#6D20C5; color:#dcbdfc" onclick="addCustomCategory()">+ Nova Categoria</button>
+
         <h2>Aptidões</h2>
         <div id="aptitudes-container" class="sortable-list"></div>
         <button class="btn-add" style="border-color: #6D20C5; color: #dcbdfc" onclick="addAptitudeBlock()">+ Categoria de Aptidão</button>
@@ -370,6 +374,34 @@ function addLog(containerId, data = {}) {
   updatePreview(); saveData();
 }
 
+function addCustomCategory(data = {}) {
+  const container = document.getElementById('custom-categories-container');
+  const div = document.createElement('div');
+  div.className = 'input-group custom-cat-block';
+  div.innerHTML = `
+    <span class="drag-handle">☰</span>
+    <label style="color:#6D20C5;font-weight:bold;">Nome da Categoria</label>
+    <input type="text" class="cat-name" value="${data.name || ''}" placeholder="Ex: Guerras, Torneios, Contratos..." oninput="updatePreview(); saveData()">
+    <div class="cat-logs-container" style="margin-top:10px;border-top:1px dashed #444;padding-top:5px;"></div>
+    <button class="btn-add" style="margin-top:5px; font-size:10px" onclick="addCatLog(this)">+ Entrada</button>
+  `;
+  div.appendChild(createRemoveBtn(div, 'aptidao'));
+  container.appendChild(div);
+  enableDrag(div);
+  if (data.logs && data.logs.length > 0) data.logs.forEach(log => addCatLog(div.querySelector('.btn-add'), log));
+  updatePreview(); saveData();
+}
+
+function addCatLog(btn, data = {}) {
+  const container = btn.previousElementSibling;
+  const div = document.createElement('div');
+  div.className = 'log-entry cat-entry';
+  div.style.marginBottom = '5px';
+  div.innerHTML = `<div class="row"><div style="flex:0 0 50px"><input type="text" class="l-date" value="${data.date || ''}" placeholder="Dt" oninput="updatePreview(); saveData()"></div><div class="col"><input type="text" class="l-text" value="${data.text || ''}" placeholder="Desc..." oninput="updatePreview(); saveData()"></div><div style="flex:0 0 40px"><input type="text" class="l-link" value="${data.link || ''}" placeholder="#" oninput="updatePreview(); saveData()"></div><button onclick="requestDelete(this.parentElement.parentElement, 'treino')" style="background:transparent; color:#882222; font-weight:bold; padding:0 5px; border:none; cursor:pointer;">x</button></div>`;
+  container.appendChild(div);
+  updatePreview(); saveData();
+}
+
 function addAptitudeBlock(data = {}) {
   const container = document.getElementById('aptitudes-container');
   const div = document.createElement('div');
@@ -422,7 +454,16 @@ function generateHTMLString() {
   });
 
   const css = `<style>.j-b{--p:#6D20C5;--b:#121212;--g:#1e1e1e;--t:#ccc;font:12px Segoe UI,sans-serif;background:var(--b);color:var(--t);border:1px solid #333;max-width:800px;margin:auto}.j-b input{display:none}.j-n{display:flex;background:#000;border-bottom:2px solid var(--p)}.j-n label{flex:1;text-align:center;padding:10px;cursor:pointer;background:#0a0a0a;font-weight:700;text-transform:uppercase;transition:.3s}#t1:checked~.j-n label[for="t1"],#t2:checked~.j-n label[for="t2"]{background:var(--p);color:#fff}.j-c{display:none;padding:15px;animation:f .5s}#t1:checked~.c1,#t2:checked~.c2{display:block}@keyframes f{from{opacity:0}to{opacity:1}}.i-c{background:var(--g);border:1px solid #333;margin-bottom:10px;padding:10px;display:grid;grid-template-columns:80px 1fr;gap:10px}.i-m{width:100%;height:80px;object-fit:cover;border:1px solid #444}.i-h{border-bottom:1px solid var(--p);padding-bottom:2px;margin-bottom:2px;display:flex;justify-content:space-between}.i-n{color:#fff;font-weight:700;text-transform:uppercase}.i-tp{font-size:9px;color:var(--p);font-weight:700;background:#000;padding:1px 4px;border-radius:2px}.i-st{font:10px monospace;color:#999}.i-st b{color:#fff}.i-d,.i-ef{line-height:1.3;font-size:11px}.i-ef{color:#dcbdfc;margin-top:2px}.i-ef b{color:var(--p)}.l-bk{margin-bottom:20px}.l-tt{background:linear-gradient(90deg,var(--p),transparent);color:#fff;padding:4px 10px;font-weight:700;text-transform:uppercase;font-size:11px;margin-bottom:5px;letter-spacing:1px}.l-rw{display:flex;justify-content:space-between;background:var(--g);padding:6px 10px;margin-bottom:2px;align-items:center;font-size:11px}.l-rw:hover{background:#333;border-left:2px solid var(--p)}.l-dt{color:var(--p);font-weight:700;margin-right:10px;font-family:monospace}.l-tx{flex:1;color:#ddd}.l-lk{background:#000;color:#fff;text-decoration:none;padding:2px 6px;border-radius:2px}.ap-bx{margin-bottom:10px;border:1px solid #333}.ap-hd{background:#252525;padding:5px 10px;font-weight:700;color:#fff;display:flex;justify-content:space-between;align-items:center;font-size:11px}.c-n{background:var(--p);padding:1px 5px;border-radius:3px;font-size:9px}.ap-bd{padding:5px}</style>`;
-  return css + `<div class="j-b"><input type="radio" name="g" id="t1" checked><input type="radio" name="g" id="t2"><div class="j-n"><label for="t1">Inventário</label><label for="t2">Registros</label></div><div class="j-c c1">${itemsHTML}</div><div class="j-c c2">${getBlock('missoes-container', 'Missões')}${getBlock('quests-container', 'Quests')}${getBlock('raids-container', 'Raids')}${getBlock('eventos-container', 'Eventos')}${getBlock('rp-container', 'RPs Livres')}${getBlock('occ-container', 'Ocorrências')}${getBlock('aulas-container', 'Aulas')}<div class="l-bk"><div class="l-tt">Treinos de Aptidão</div>${aptHTML}</div>${getBlock('attr-container', 'Treinos de Atributo')}</div></div>`;
+  let customCatHTML = '';
+  document.querySelectorAll('.custom-cat-block').forEach(blk => {
+    const name = blk.querySelector('.cat-name').value || 'Categoria';
+    const entries = blk.querySelectorAll('.cat-entry');
+    let entriesStr = '';
+    entries.forEach(l => { entriesStr += `<div class="l-rw"><span class="l-dt">${l.querySelector('.l-date').value}</span><span class="l-tx">${l.querySelector('.l-text').value}</span><a href="${l.querySelector('.l-link').value}" class="l-lk">LINK</a></div>`; });
+    customCatHTML += `<div class="l-bk"><div class="l-tt">${name}</div>${entriesStr}</div>`;
+  });
+
+  return css + `<div class="j-b"><input type="radio" name="g" id="t1" checked><input type="radio" name="g" id="t2"><div class="j-n"><label for="t1">Inventário</label><label for="t2">Registros</label></div><div class="j-c c1">${itemsHTML}</div><div class="j-c c2">${getBlock('missoes-container', 'Missões')}${getBlock('quests-container', 'Quests')}${getBlock('raids-container', 'Raids')}${getBlock('eventos-container', 'Eventos')}${getBlock('rp-container', 'RPs Livres')}${getBlock('occ-container', 'Ocorrências')}${getBlock('aulas-container', 'Aulas')}<div class="l-bk"><div class="l-tt">Treinos de Aptidão</div>${aptHTML}</div>${getBlock('attr-container', 'Treinos de Atributo')}${customCatHTML}</div></div>`;
 }
 
 function updatePreview() { 
@@ -462,7 +503,7 @@ function fallbackCopy(text) {
 
 // --- PERSISTÊNCIA ---
 function saveData() {
-    const data = { items: [], missoes: [], quests: [], raids: [], eventos: [], rp: [], occ: [], aulas: [], attr: [], aptitudes: [] };
+    const data = { items: [], missoes: [], quests: [], raids: [], eventos: [], rp: [], occ: [], aulas: [], attr: [], aptitudes: [], customCategories: [] };
     
     document.querySelectorAll('.item-entry').forEach(el => {
         data.items.push({
@@ -488,6 +529,15 @@ function saveData() {
         });
         data.aptitudes.push({ name: blk.querySelector('.apt-select').value, logs: logs });
     });
+
+    document.querySelectorAll('.custom-cat-block').forEach(blk => {
+        const logs = [];
+        blk.querySelectorAll('.cat-entry').forEach(l => {
+            logs.push({ date: l.querySelector('.l-date').value, text: l.querySelector('.l-text').value, link: l.querySelector('.l-link').value });
+        });
+        data.customCategories.push({ name: blk.querySelector('.cat-name').value, logs: logs });
+    });
+
     localStorage.setItem('jkga_sec_v3', JSON.stringify(data));
 }
 
@@ -504,6 +554,7 @@ function repopulateForm(data) {
     document.getElementById('items-container').innerHTML = '';
     ['missoes-container','quests-container','raids-container','eventos-container','rp-container','occ-container','aulas-container','attr-container'].forEach(id => document.getElementById(id).innerHTML = '');
     document.getElementById('aptitudes-container').innerHTML = '';
+    document.getElementById('custom-categories-container').innerHTML = '';
 
     if(data.items) data.items.forEach(i => addItem(i));
     if(data.missoes) data.missoes.forEach(l => addLog('missoes-container', l));
@@ -515,6 +566,7 @@ function repopulateForm(data) {
     if(data.aulas) data.aulas.forEach(l => addLog('aulas-container', l));
     if(data.attr) data.attr.forEach(l => addLog('attr-container', l));
     if(data.aptitudes) data.aptitudes.forEach(a => addAptitudeBlock(a));
+    if(data.customCategories) data.customCategories.forEach(c => addCustomCategory(c));
     updatePreview();
 }
 
@@ -531,7 +583,7 @@ function processImport() {
     try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(code, 'text/html');
-        const importedData = { items: [], missoes: [], quests: [], raids: [], eventos: [], rp: [], occ: [], aulas: [], attr: [], aptitudes: [] };
+        const importedData = { items: [], missoes: [], quests: [], raids: [], eventos: [], rp: [], occ: [], aulas: [], attr: [], aptitudes: [], customCategories: [] };
 
         doc.querySelectorAll('.i-c').forEach(el => {
             const stats = el.querySelector('.i-st').innerHTML;
@@ -561,6 +613,9 @@ function processImport() {
             else if(title.includes('OCORRÊNCIAS')) importedData.occ = logs;
             else if(title.includes('AULAS')) importedData.aulas = logs;
             else if(title.includes('TREINOS DE ATRIBUTO')) importedData.attr = logs;
+            else if(!['MISSÕES','QUESTS','RAIDS','EVENTOS','RPS LIVRES','OCORRÊNCIAS','AULAS','TREINOS DE ATRIBUTO','TREINOS DE APTIDÃO'].some(k => title.includes(k))) {
+                importedData.customCategories.push({ name: bk.querySelector('.l-tt').innerText, logs: logs });
+            }
             else if(title.includes('TREINOS DE APTIDÃO')) {
                 bk.querySelectorAll('.ap-bx').forEach(ab => {
                     const aptName = ab.querySelector('.ap-hd').childNodes[0].textContent.trim();
